@@ -1,18 +1,28 @@
 import { sql } from 'bun'
 
-// Create table if it doesn't exist
-await sql`
-  CREATE TABLE IF NOT EXISTS groceries (
-    id SERIAL PRIMARY KEY,
-    item TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
-  )
-`
+// Initialize database table
+let dbInitialized = false
+async function initializeDB() {
+  if (!dbInitialized) {
+    await sql`
+      CREATE TABLE IF NOT EXISTS groceries (
+        id SERIAL PRIMARY KEY,
+        item TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `
+    dbInitialized = true
+    console.log('Database initialized')
+  }
+}
 
 const server = Bun.serve({
   port: process.env.PORT || 3000,
   hostname: '0.0.0.0',
   async fetch(req) {
+    // Ensure database is initialized on first request
+    await initializeDB()
+
     const url = new URL(req.url)
 
     // Serve the HTML form
